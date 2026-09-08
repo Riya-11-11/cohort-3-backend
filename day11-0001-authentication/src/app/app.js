@@ -1,5 +1,10 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import userModel from "../models/user.model.js";
+import { authenticate } from "../middleware/auth.middleware.js";
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
+dotenv.config();
 
 const app = express();
 
@@ -11,16 +16,20 @@ app.get("/api", (req, res) => {
   });
 });
 
-app.post("/api/auth/register", (req, res) => {
-  const { email, name, password } = req.body; //database m store k\iya h
+app.post("/api/auth/register", async (req, res) => {
+  const { email, name, password } = req.body; //database m store kiya h
+
+  const user = await userModel.create({
+    email,
+    name,
+    password: await bcrypt.hash(password, 10), //paassword hash ho jaayega aur jitna bada no. choose krte h utna jyada wo secure hoga, but space v jyada leta h
+  });
 
   const token = jwt.sign(
     {
-      email,
-      name,
-      //_id
+      id: user._id,
     },
-    "1a89acb2cdfce61a78e1d61eabbf3e3f8bbc1d439b6c258f3bcf3d97ac8bd055",
+    process.env.JWT_SECRET,
   );
 
   res.status(201).json({
@@ -29,8 +38,21 @@ app.post("/api/auth/register", (req, res) => {
       user: {
         email,
         name,
+        id: user._id,
       },
       token,
+    },
+  });
+});
+
+app.get("/api/auth/me", authenticate, async (req, res) => {
+  //authenticate--->middleware
+
+  console.log(req.user);
+
+  res.status(200).json({
+    data: {
+      user: req.user,
     },
   });
 });
