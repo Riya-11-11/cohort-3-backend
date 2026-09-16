@@ -28,6 +28,7 @@ const Register = () => {
     try {
       const response = await api.post("/auth/register", form);
       console.log("Registration successful:", response.data);
+      
 
     } catch (err) {
       setError(err?.message || "An error occurred during registration.");
