@@ -76,6 +76,10 @@ router.delete("/:id", async function (req, res) {
   }
 
   await urlModel.findByIdAndDelete(id);
+
+    return res.status(200).json({
+    message: "URL deleted successfully",
+  });
 });
 
 export default router;

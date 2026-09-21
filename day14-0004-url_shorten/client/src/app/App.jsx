@@ -52,6 +52,8 @@ function App() {
     });
 
     fetchUrls();
+    setInputValue("")
+
   }
 
   async function deleteUrl(id) {
