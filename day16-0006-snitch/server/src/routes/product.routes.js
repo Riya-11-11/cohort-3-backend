@@ -1,9 +1,19 @@
 import { Router } from "express";
-import { createProductValidator } from "../validators/product.validator";
-import { authenticate } from "../Middleware/auth.middleware.js";
+import {
+  createProductValidator,
+  unlistProductValidator,
+  listProductValidator,
+} from "../validators/product.validator.js";
+import {
+  authenticate,
+  authenticateSeller,
+} from "../Middleware/auth.middleware.js";
 import {
   createProduct,
   listAllProducts,
+  unlistProduct,
+  listProduct,
+  listAllProductsToSeller,
 } from "../controllers/product.controller.js";
 
 import multer from "multer";
@@ -31,14 +41,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
-  (req, res, next) => {
-    if (req.user.role !== "seller") {
-      return res.status(403).json({
-        message: "User is not authorize to create products",
-      });
-    }
-    next();
-  },
+  authenticateSeller,
   upload.array("images"),
   (req, res, next) => {
     req.body?.price && (req.body.price = JSON.parse(req.body.price));
@@ -53,10 +56,54 @@ router.post(
 /**
  * @method GET
  * @route /api/product
- * @description Read all the products from the DB
+ * @description Read all the published products from the DB
  * @access user
  */
 
 router.get("/", authenticate, listAllProducts);
+
+/**
+ * @method GET
+ * @route /api/product/seller
+ * @description Read all the products from the DB
+ * @access seller
+ */
+
+router.get(
+  "/seller",
+  authenticate,
+  authenticateSeller,
+  listAllProductsToSeller,
+);
+
+/**
+ * @method PATCH
+ * @route /api/products/unlist/:id
+ * @access seller
+ * @description Unlist a product by id
+ */
+
+router.patch(
+  "/unlist/:id",
+  authenticate,
+  authenticateSeller,
+  unlistProductValidator,
+  unlistProduct,
+);
+
+/**
+ * @method PATCH
+ * @route /api/products/list/:id
+ * @access seller
+ * @description list a product by id
+ */
+
+router.patch(
+  "/list/:id",
+  authenticate,
+  authenticateSeller,
+  listProductValidator,
+  listProduct,
+);
 
 export default router;

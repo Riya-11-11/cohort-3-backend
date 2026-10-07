@@ -13,11 +13,21 @@ export function authenticate(req, res, next) {
     const decoded = readAccessToken(accessToken);
 
     req.user = decoded;
-    
+
     next();
   } catch (error) {
     res.status(401).json({
       message: "Invalid oe expired access token",
     });
   }
+}
+
+export function authenticateSeller(req, res, next) {
+  if (req.user.role !== "seller") {
+    return res.status(403).json({
+      message: "User is not authorized to perform this action",
+    });
+  }
+
+  next()
 }
