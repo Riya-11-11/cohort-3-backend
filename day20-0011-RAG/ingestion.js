@@ -22,29 +22,43 @@ const textSplitter = new RecursiveCharacterTextSplitter({
 
 const chunks = await textSplitter.splitText(text);
 
-//  ------------- Iniatialize embeddings [embedding model] --------------
+console.log("Extracted text length:", text.length);
+console.log("Total chunks:", chunks.length);
+
+// Initialize embeddings
 const embeddings = new CohereEmbeddings({
   model: "embed-v5.0-fast",
   apiKey: process.env.COHERE_API_KEY,
 });
 
-//  -------------- Embed the text chunks into vectors --------------
+// Generate vectors
 const vectors = await embeddings.embedDocuments(chunks);
 
-//  -------------- Initialize Pinecone client --------------
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+console.log("Total vectors:", vectors.length);
 
-const index = pc.Index({
-  name:"cohortrag",
-  host: "https://cohortrag-w43l7py.svc.aped-4627-b74a.pinecone.io"
+// -------------- Initialize Pinecone client --------------
+
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY,
 });
 
-await index.upsertRecords({
+const index = pc.Index({
+  name: "cohortrag-vectors",
+  host: "https://cohortrag-vectors-w43l7py.svc.aped-4627-b74a.pinecone.io",
+});
+
+// -------------- Upsert vectors into Pinecone --------------
+
+await index.upsert({
   records: vectors.map((vector, index) => {
     return {
       id: `chunk-${index}`,
-      embedding: vector,
-      content: chunks[index],
+      values: vector,
+      metadata: {
+        text: chunks[index],
+      },
     };
   }),
 });
+
+console.log("Data successfully stored in Pinecone!");
